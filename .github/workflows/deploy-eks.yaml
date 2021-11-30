@@ -1,0 +1,54 @@
+name: Update EKS deployment
+
+on:
+  workflow_call:
+    inputs:
+      aws_account_id:
+        description: 'The account ID of the environment'
+        required: true
+        type: string
+      aws_region:
+        description: 'Region AWS'
+        default: 'eu-west-1'
+        required: false
+        type: string
+      cluster_name:
+        description: 'The name of the EKS cluster'
+        required: true
+        type: string
+      kubernetes_namespace:
+        description: 'Kubernetes namespace'
+        required: true
+        type: string
+      kubernetes_resource:
+        description: 'The kubernetes resource to be upgraded'
+        required: true
+        type: string
+      docker_image_name:
+        description: 'The docker image name'
+        required: true
+        type: string
+      docker_container_name:
+        description: 'The container definition to be updated'
+        required: true
+        type: string
+    secrets:
+      aws_access_key_id:
+        description: 'AWS access key id'
+        required: true
+      aws_secret_access_key:
+        description: 'AWS secret access key'
+        required: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update docker image
+        uses: ianbelcher/eks-kubectl-action@master
+        with:
+          aws_access_key_id: ${{ secrets.aws_access_key_id }}
+          aws_secret_access_key: ${{ secrets.aws_secret_access_key }}
+          aws_region: ${{ inputs.aws_region }}
+          cluster_name: ${{ inputs.cluster_name }}
+          args: set image -n ${{ inputs.kubernetes_namespace }} ${{ inputs.kubernetes_resource }} ${{inputs.docker_container_name}}=${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.docker_image_name }}:${{ github.sha }}
