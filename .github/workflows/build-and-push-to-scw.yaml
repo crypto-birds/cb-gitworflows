@@ -11,6 +11,10 @@ on:
         description: 'The docker image name'
         required: true
         type: string
+      docker_image_tag:
+        description: 'The docker image tag'
+        required: true
+        type: string
     secrets:
       SCW_SECRET_KEY:
         description: 'The Scaleway secret key'
@@ -38,6 +42,6 @@ jobs:
     - name: Confirm git commit SHA output
       run: echo ${{ env.COMMIT_SHORT_SHA }}
     - name: Build the Docker image
-      run: docker build ${{ inputs.docker_context }} -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ env.COMMIT_SHORT_SHA }}
+      run: docker build ${{ inputs.docker_context }} -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ inputs.docker_image_tag }}
     - name: Push the Docker Image
-      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ env.COMMIT_SHORT_SHA }}
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ inputs.docker_image_tag }}
