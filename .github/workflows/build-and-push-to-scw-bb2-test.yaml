@@ -1,0 +1,53 @@
+name: Build & Deploy to Scaleway
+
+on:
+  workflow_call:
+    inputs:
+      docker_context:
+        description: 'The docker build context'
+        required: true
+        type: string
+      docker_image_name:
+        description: 'The docker image name'
+        required: true
+        type: string
+      docker_image_tag:
+        description: 'The docker image tag'
+        required: true
+        type: string
+      docker_file_name:
+        description: 'The docker file name'
+        required: true
+        type: string
+    secrets:
+      SCW_SECRET_KEY:
+        description: 'The Scaleway secret key'
+        required: true
+      CONTAINER_REGISTRY_ENDPOINT:
+        description: 'The Scaleway container registry endpoint'
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Login to Scaleway Container Registry
+      uses: docker/login-action@v3
+      with:
+        username: nologin
+        password: ${{ secrets.SCW_SECRET_KEY }}
+        registry: ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}
+    - name: Set short git commit SHA
+      id: vars
+      run: |
+        calculatedSha=$(git rev-parse --short ${{ github.sha }})
+        echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
+    - name: echo tag
+      run: echo ${{ inputs.docker_image_tag }}
+
+    - name: Confirm git commit SHA output
+      run: echo ${{ env.COMMIT_SHORT_SHA }}
+    - name: Build the Docker image
+      run: docker build ${{ inputs.docker_context }} -t ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ inputs.docker_image_tag }} -f ${{ inputs.docker_file_name }}
+    - name: Push the Docker Image
+      run: docker push ${{ secrets.CONTAINER_REGISTRY_ENDPOINT }}/${{ inputs.docker_image_name }}:${{ inputs.docker_image_tag }}
